@@ -1,0 +1,5 @@
+# Nope not going to make my secrets public
+.env
+
+# Dont push any compiled binaries onto repo
+app
