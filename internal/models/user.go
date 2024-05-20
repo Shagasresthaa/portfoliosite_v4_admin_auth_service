@@ -14,6 +14,7 @@ type User struct {
     Email         string    `gorm:"size:255;not null;unique" json:"email"`
     Password      string    `gorm:"size:255;not null" json:"password"`
     Role          string    `gorm:"size:50;not null" json:"role"`
+    Sponsor       string    `gorm:"size:50;not null" json:"sponsor"`
     TOTPSecret    string    `gorm:"size:255" json:"totpSecret"`
     IsTOTPEnabled bool      `gorm:"default:false" json:"isTotpEnabled"`
     IsActive      bool      `gorm:"default:true" json:"isActive"`
@@ -38,13 +39,14 @@ func GenerateID(length int) string {
 }
 
 // NewUser creates a new user instance and automatically generates a unique ID for the user
-func NewUser(username, email, password, role string) *User {
+func NewUser(username, email, password, role string, sponsor string) *User {
     return &User{
         ID:            GenerateID(16),
         Username:      username,
         Email:         email,
         Password:      password, 
         Role:          role,
+        Sponsor:       sponsor,
         TOTPSecret:    "", // To be set when TOTP is implemented (Probably until UI is ready wont be in use)
         IsTOTPEnabled: false,
         IsActive:      true,

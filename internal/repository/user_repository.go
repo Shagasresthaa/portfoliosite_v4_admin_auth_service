@@ -50,3 +50,11 @@ func (repo *UserRepository) DeleteUser(id string) error {
     result := repo.DB.Delete(&models.User{}, "id = ?", id)
     return result.Error
 }
+
+// Retrieves a single user by email
+func (repo *UserRepository) GetUserByEmail(email string) (*models.User, error) {
+	var user models.User
+	result := repo.DB.Where("email = ?", email).First(&user)
+	return &user, result.Error
+}
+
