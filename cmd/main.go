@@ -16,9 +16,15 @@ func main() {
     if err := godotenv.Load(); err != nil {
         log.Println("Warning: No .env file found")
     }
+    jwtSecret := os.Getenv("JWT_SECRET")
+	if jwtSecret == "" {
+		log.Fatal("JWT_SECRET is not set in the environment")
+	}
 
     gromDB := db.InitDB()
-    jwtManager := jwtmanager.NewJWTManager(os.Getenv("JWT_SECRET"), 72*time.Hour)
+    accessTokenDuration := 15 * time.Minute  
+
+	jwtManager := jwtmanager.NewJWTManager(jwtSecret, accessTokenDuration)
     router := api.SetupRouter(gromDB, jwtManager)
     router.Run() // Default runs on PORT 8080
 }
