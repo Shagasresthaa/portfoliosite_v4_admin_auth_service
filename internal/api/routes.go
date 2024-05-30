@@ -20,7 +20,7 @@ func SetupRouter(gormDB *gorm.DB, jwtManager *jwtmanager.JWTManager) *gin.Engine
 
 	// Protected routes using JWT middleware
 	api := router.Group("/")
-	api.Use(middleware.AuthMiddleware(jwtManager))
+	api.Use(middleware.AuthMiddleware(jwtManager, repo))
 	{
 		api.POST("/users", handlers.CreateUserHandler(repo))  // Create a new user
 		api.GET("/users/:id", handlers.GetUserByIDHandler(repo))  // Retrieve a user by ID

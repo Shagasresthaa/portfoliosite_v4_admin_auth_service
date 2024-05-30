@@ -89,17 +89,61 @@ func CreateUserHandler(repo *repository.UserRepository) gin.HandlerFunc {
 func UpdateUserHandler(repo *repository.UserRepository) gin.HandlerFunc {
     return func(c *gin.Context) {
         id := c.Param("id")
-        var user models.User
-        if err := c.BindJSON(&user); err != nil {
+        var input struct {
+            Username  string `json:"username,omitempty"`
+            Email     string `json:"email,omitempty"`
+            Password  string `json:"password,omitempty"`
+            Role      string `json:"role,omitempty"`
+            Sponsor   string `json:"sponsor,omitempty"`
+        }
+
+        if err := c.BindJSON(&input); err != nil {
             c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid data"})
             return
         }
-        user.ID = id
-        if err := repo.UpdateUser(&user); err != nil {
+
+        // Fetch the existing user to compare if password needs to be updated
+        existingUser, err := repo.GetUserByID(id)
+        if err != nil {
+            c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+            return
+        }
+
+        // If password field is not empty and different from the old password, hash new password
+        if input.Password != "" && bcrypt.CompareHashAndPassword([]byte(existingUser.Password), []byte(input.Password)) != nil {
+            hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+            if err != nil {
+                c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+                return
+            }
+            existingUser.Password = string(hashedPassword)
+        }
+
+        // Update other fields if provided
+        if input.Username != "" {
+            existingUser.Username = input.Username
+        }
+        if input.Email != "" {
+            if !validateEmail(input.Email) {
+                c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid email format"})
+                return
+            }
+            existingUser.Email = input.Email
+        }
+        if input.Role != "" {
+            existingUser.Role = input.Role
+        }
+        if input.Sponsor != "" {
+            existingUser.Sponsor = input.Sponsor
+        }
+
+        // Update the user in the database
+        if err := repo.UpdateUser(existingUser); err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Could not update user"})
             return
         }
-        c.JSON(http.StatusOK, gin.H{"message": "User updated"})
+        existingUser.Password = "" // Do not return the password hash
+        c.JSON(http.StatusOK, gin.H{"message": "User updated", "user": existingUser})
     }
 }
 

@@ -31,7 +31,7 @@ func LoginHandler(repo *repository.UserRepository, jwtManager *jwtmanager.JWTMan
             return
         }
 
-        accessToken, err := jwtManager.GenerateToken(user.ID)
+        accessToken, err := jwtManager.GenerateToken(user.ID, user.Username)
         if err != nil {
             c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate token"})
             return

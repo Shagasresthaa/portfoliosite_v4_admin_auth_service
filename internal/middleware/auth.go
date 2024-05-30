@@ -5,11 +5,12 @@ import (
 	"strings"
 
 	"portfoliosite_v4_admin_auth_service/internal/jwtmanager"
+	"portfoliosite_v4_admin_auth_service/internal/repository" // Ensure this import path is correct
 
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(jwtManager *jwtmanager.JWTManager) gin.HandlerFunc {
+func AuthMiddleware(jwtManager *jwtmanager.JWTManager, userRepository *repository.UserRepository) gin.HandlerFunc {
     return func(c *gin.Context) {
         authHeader := c.GetHeader("Authorization")
         if authHeader == "" {
@@ -25,14 +26,13 @@ func AuthMiddleware(jwtManager *jwtmanager.JWTManager) gin.HandlerFunc {
         }
 
         tokenStr := parts[1]
-        token, err := jwtManager.VerifyToken(tokenStr)
+        token, claims, err := jwtManager.VerifyToken(tokenStr, userRepository)
         if err != nil {
-            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token"})
+            c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Invalid token: " + err.Error()})
             return
         }
 
-        if claims, ok := token.Claims.(*jwtmanager.Claims); ok && token.Valid {
-            // Attach claims to the context for use in the handler
+        if token.Valid {
             c.Set("userID", claims.Subject)
             c.Next()
         } else {
