@@ -52,6 +52,9 @@ func InitDB() *gorm.DB {
     if err := DB.AutoMigrate(&models.User{}); err != nil {
         log.Fatalf("Failed to auto-migrate database schema: %v", err)
     }
+    if err := DB.AutoMigrate(&models.Project{}); err != nil {
+        log.Fatalf("Failed to auto-migrate database schema: %v", err)
+    }
 
     return DB
 }

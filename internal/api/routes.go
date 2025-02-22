@@ -32,24 +32,29 @@ func SetupRouter(gormDB *gorm.DB, jwtManager *jwtmanager.JWTManager) *gin.Engine
         MaxAge:           12 * time.Hour,
     }))
 
-	repo := repository.NewUserRepository(gormDB)
+	userRepo := repository.NewUserRepository(gormDB)
+	projRepo := repository.NewProjectRepository(gormDB)
 
 	// Public routes
-	router.POST("/api/admin/login", handlers.LoginHandler(repo, jwtManager)) // Login Handler
+	router.POST("/api/admin/login", handlers.LoginHandler(userRepo, jwtManager)) // Login Handler
 	// Note to self: you will find this useful when you deploy the first time or you lock yourself out and need to recreate your user maybe because you nuked the db
 	// For the love of god dont you make this public and if you did donot forget to remove it and add it back to jwtmanager
-	// router.POST("/users", handlers.CreateUserHandler(repo)) 
+	// router.POST("/users", handlers.CreateUserHandler(userRepo)) 
 
 	// Protected routes using JWT middleware
 	api := router.Group("/api/admin")
-	api.Use(middleware.AuthMiddleware(jwtManager, repo))
+	api.Use(middleware.AuthMiddleware(jwtManager, userRepo))
 	{
-		api.POST("/users", handlers.CreateUserHandler(repo))  // Create a new user
-		api.GET("/users/:id", handlers.GetUserByIDHandler(repo))  // Retrieve a user by ID
-		api.PUT("/users/:id", handlers.UpdateUserHandler(repo))  // Update a user by ID
-		api.DELETE("/users/:id", handlers.DeleteUserHandler(repo))  // Delete a user by ID
-		api.GET("/users", handlers.ListAllUsersHandler(repo))  // List all users
-		api.GET("/users/role/:role", handlers.ListUsersByRoleHandler(repo))  // List users by role
+		api.POST("/users", handlers.CreateUserHandler(userRepo))  // Create a new user
+		api.GET("/users/:id", handlers.GetUserByIDHandler(userRepo))  // Retrieve a user by ID
+		api.PUT("/users/:id", handlers.UpdateUserHandler(userRepo))  // Update a user by ID
+		api.DELETE("/users/:id", handlers.DeleteUserHandler(userRepo))  // Delete a user by ID
+		api.GET("/users", handlers.ListAllUsersHandler(userRepo))  // List all users
+		api.GET("/users/role/:role", handlers.ListUsersByRoleHandler(userRepo))  // List users by role
+		
+		// Project Creation Routes
+		api.POST("/projects", handlers.CreateProjectHandler(projRepo)) // Create a new project
+		api.GET("/projects", handlers.ListAllProjectsHandler(projRepo)) // Get all projects
 	}
 
 	// API Test Routes
